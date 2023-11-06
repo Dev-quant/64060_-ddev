@@ -1,0 +1,319 @@
+---
+title: "Assignment-5 (QMM)"
+author: "Dev"
+date: "2023-10-28"
+output: html_document
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, comment=NA)
+library(kableExtra)
+library(knitr)
+library(Benchmarking)
+library(plyr)
+```
+
+### QUESTION:
+
+**The Hope Valley Health Care Association owns and operates six nursing homes in adjoining states.An evaluation of their efficiency has been undertaken using two inputs and two outputs.The inputs are staffing labor (measured in average hours per day) and the cost of supplies (in thousands of dollars per day). The outputs are the number of patient-days reimbursed by third-party sources and the number of patient-days reimbursed privately. A summary of performance data is shown in the table below:**
+
+```{r}
+df= data.frame(DMU=c("Facility-1","Facility-2","Facility-3","Facility-4","Facility-5","Facility-6"),
+               Staff_hours_per_day = c(100,300,320,500,350,340),
+               Supplies_per_day = c(0.3,0.6,1.2,2,1.4,0.7),
+               Reimbursed_pateint_days = c(15000,15000,40000,28000,20000,14000),
+               Privately_paid_pateint_days = c(3500,20000,11000,42000,25000,15000)
+               )
+df %>% 
+  kable(caption = "The Hope Valley Health Care Association",align = "c") %>% 
+  kable_classic() %>% 
+  column_spec(3,border_right = TRUE) %>% 
+  column_spec(2,border_right = TRUE,extra_css = "border-right:dashed") %>% 
+  column_spec(4,border_right = TRUE,extra_css="border-right:dashed") %>% 
+  add_header_above(header = c(" "=1,"Inputs"=2,"Outputs"=2))
+```
+
+Making input and output matrices: 
+```{r}
+#Input matrix
+x=matrix(c(100,300,320,500,350,340,0.3,0.6,1.2,2.0,1.4,0.7),ncol=2,dimnames = list(LETTERS[1:6],c("X1","X2")))
+y=matrix(c(15000,15000,40000,28000,20000,14000,3500,20000,11000,42000,25000,15000),ncol = 2,dimnames = list(LETTERS[1:6],c("Y1","Y2")))
+
+```
+
+***
+
+**1. Formulate and perform DEA analysis under all DEA assumptions of FDH, CRS, VRS, IRS, DRS, and FRH**
+
+Now, as we have input and output matrices ready we can apply dea command and use it to get the efficiency of all six DMUs.
+
++ Efficiency in CRS (Constant return to scale) with DEA plot-
+```{r}
+crs=dea(x,y,RTS = "crs")
+crs
+dea.plot(x,y,RTS = "crs",txt = rownames(x))
+```
+
++ Efficiency in IRS (Increasing return to scale) with DEA plot-
+```{r}
+irs=dea(x,y,RTS="irs")
+irs
+dea.plot(x,y,RTS="irs",txt = rownames(x))
+```
+
++ Efficiency in DRS (Decreasing return to scale) with DEA plot-
+```{r}
+drs=dea(x,y,RTS="drs")
+drs
+dea.plot(x,y,RTS="drs",txt = rownames(x))
+```
+
++ Efficiency in VRS (Varying return to scale) with DEA plot-
+```{r}
+vrs=dea(x,y,RTS="vrs")
+vrs
+dea.plot(x,y,RTS="vrs",txt = rownames(x))
+```
+
++ Efficiency in FDH (Free disposal hull) with DEA plot-
+```{r}
+fdh=dea(x,y,RTS="fdh")
+fdh
+dea.plot(x,y,RTS="fdh",txt = rownames(x))
+```
+
++ Efficiency if FRH (Free re-scaled hull) with DEA plot-
+```{r}
+frh=dea(x,y,RTS="add")
+frh
+dea.plot(x,y,RTS="add",txt = rownames(x))
+```
+
+***
+
+**2. Determine the Peers and Lambdas under each of the above assumptions**
+
+- Peers CRS
+```{r}
+peers(crs)
+```
+- Lambdas CRS
+```{r}
+round(lambda(crs),2)
+```
+
+- Peers IRS
+```{r}
+peers(irs)
+```
+- Lambdas IRS
+```{r}
+round(lambda(irs),2)
+```
+
+- Peers DRS
+```{r}
+peers(drs)
+```
+- Lambdas DRS
+```{r}
+round(lambda(drs),2)
+```
+
+- Peers VRS
+```{r}
+peers(vrs)
+```
+- Lambdas VRS
+```{r}
+round(lambda(vrs),2)
+```
+
+- Peers FDH
+```{r}
+peers(fdh)
+```
+- Lambdas FDH
+```{r}
+round(lambda(fdh),2)
+```
+
+- Peers FRH
+```{r}
+peers(frh)
+```
+- Lambdas FRH
+```{r}
+round(lambda(frh),2)
+```
+
+***
+
+**3. Summarize your results in a tabular format**
+
+- Results in tabular form for CRS: 
+```{r}
+crs.df=cbind(peers(crs),round(lambda(crs),2))
+crs.df=data.frame(crs.df)
+crs.df %>% 
+  kable(align = "c") %>% 
+  kable_classic() %>% 
+  add_header_above(c("Facility"=1,"Peers"=2,"Lamba Values"=3))
+```
+
+- Results in tabular form for IRS: 
+```{r}
+irs.df=cbind(peers(irs),round(lambda(irs),2))
+irs.df=data.frame(irs.df)
+irs.df %>% 
+  kable(align = "c") %>% 
+  kable_classic() %>% 
+  add_header_above(c("Facility"=1,"Peers"=2,"Lamba Values"=3))
+```
+
+- Results in tabular form for DRS: 
+```{r}
+drs.df=cbind(peers(drs),round(lambda(drs),2))
+drs.df=data.frame(drs.df)
+drs.df %>% 
+  kable(align = "c") %>% 
+  kable_classic() %>% 
+  add_header_above(c("Facility"=1,"Peers"=2,"Lamba Values"=4))
+```
+
+- Results in tabular form for VRS: 
+```{r}
+vrs.df=cbind(peers(vrs),round(lambda(vrs),2))
+vrs.df=data.frame(vrs.df)
+vrs.df %>% 
+  kable(align = "c") %>% 
+  kable_classic() %>% 
+  add_header_above(c("Facility"=1,"Peers"=2,"Lamba Values"=4))
+```
+
+- Results in tabular form for FDH: 
+```{r}
+fdh.df=cbind(peers(fdh),round(lambda(fdh),2))
+fdh.df=data.frame(fdh.df)
+fdh.df %>% 
+  kable(align = "c") %>% 
+  kable_classic() %>% 
+  add_header_above(c("Facility"=1,"Peers"=1,"Lamba Values"=5))
+```
+
+- Results in tabular form for FRH: 
+```{r}
+frh.df=cbind(peers(frh),round(lambda(frh),2))
+frh.df=data.frame(frh.df)
+frh.df %>% 
+  kable(align = "c") %>% 
+  kable_classic() %>% 
+  add_header_above(c("Facility"=1,"Peers"=1,"Lamba Values"=5))
+
+```
+
+**4. Compare and contrast the above results**
+
+***Constant Return to Scale (CRS):***
+
+CRS that when all inputs are multiplied by a constant factor, the output will also be multiplied by the same factor. 
+
+```{r}
+crs
+```
+
+- We can observe that A,B,D has an efficiency of 1 ,i.e, they have attained the maximum attainable efficiency. However, C, E and F are inefficient in nature.
+Inefficiency can also be calculated as 1 - Efficiency.
+
+- Peers of C,E and F  are hence C(1,4) , E(1,4) and F(1,2). This means that C and E need to learn from A and D ,however, F needs to learn from A and B.
+
+- Lambda values of C,E and F are C(2.58,0.05) , E(0.26,0.57) and F(0.22,0.71). Lambda values show how much ta particular facility needs to learn from it's peers. Higher lambda value means that the facility needs to learn more from that peer as compared to peers. 
+1. C needs to learn more from 1 (A) than it needs to from 4(D) in the ratio 258:5. Its inefficiency is 1-0.8793 = 0.1207. 
+2. E learns from its peers A and D in the ratio 11:14. Its inefficiency is 1-0.8942 = 0.1052
+3. F learns from its peers A and B in the approximate ratio 1:3 (22/71). Its inefficiency is 0.2952.
+
+
+***Increased Return to Scale (IRS):***
+
+IRS that when all inputs are multiplied by a constant factor, the output will also be multiplied by the same factor. 
+
+```{r}
+irs
+```
+
+- We can observe that A,B,D has an efficiency of 1 ,i.e, they have attained the maximum attainable efficiency. However, C, E and F are inefficient in nature.
+
+- Peers of C,E and F  are hence C(A,D) , E(A,D) and F(A,B). This means that C and E need to learn from A and D ,however, F needs to learn from A and B.
+
+- Lambda values of C,E and F are C(2.58,0.05) , E(0.44,0.56) and F(0.30,0.7). Lambda values show how much ta particular facility needs to learn from it's peers. Higher lambda value means that the facility needs to learn more from that peer as compared to peers. 
+1. C needs to learn more from 1 (A) than it needs to from 4(D) in the ratio 258:5. Its efficiency is 1-0.8793 = 0.1207.
+2. E learns from its peers A and D in the ratio 11:14. Its efficiency is 1-0.9239 = 0.0761.
+3. F learns from its peers A and B in the ratio 3:7. Its efficiency is 1-0.7273 = 0.2727.
+
+
+***Decreased Return to Scale (DRS):***
+
+DRS that when all inputs are multiplied by a constant factor, the output will  be multiplied by a lesser factor. 
+
+```{r}
+drs
+```
+
+- We can observe that A,B,C,D has an efficiency of 1 ,i.e, they have attained the maximum attainable efficiency. However, E and F are inefficient in nature.
+
+- Peers of E and F  are hence E(A,D) and F(A,B). This means that E needs to learn from A and D ,however, F needs to learn from A and B.
+
+- Lambda values of E and F are  E(0.26,0.57) and F(0.22,0.71). Lambda values show how much ta particular facility needs to learn from it's peers. Higher lambda value means that the facility needs to learn more from that peer as compared to peers. 
+1. E needs to learn more from D than it needs to from A in the approximate ratio 1:2 (26/57). Its inefficiency is 1-0.8942 = 0.1058.
+2. F learns from its peers A and B in the approximate ratio 1:3 (22:71). Its inefficiency is 1-0.7048 = 0.2952.
+
+
+***Varying Return to Scale (VRS):***
+
+VRS that when all inputs are multiplied by a constant factor, the output can be multiplied with any factor, i.e, there is no relation among them. 
+
+```{r}
+vrs
+```
+
+- We can observe that A,B,C,D has an efficiency of 1 ,i.e, they have attained the maximum attainable efficiency. However, E and F are inefficient in nature.
+
+- Peers of C,E and F  are hence E(A,D) and F(A,B). This means that C and E need to learn from A and D ,however, F needs to learn from A and B.
+
+- Lambda values of E and F are  E(0.44,0.56) and F(0.30,0.7). Lambda values show how much a particular facility needs to learn from it's peers. Higher lambda value means that the facility needs to learn more from that peer as compared to peers. 
+ 1. E learns more from A than it needs to from D in the ratio 11:14. Its inefficiency is 1-0.9239 = 0.0761
+ 2. F learns from its peers A and B in the ratio 3:7. Its inefficiency is 1-0.7273 = 0.2727
+
+
+***Free-Disposal Hull (FDH):***
+FDH is used when their are undesirable outputs produced along with desirable outputs.
+```{r}
+fdh
+```
+
+- We can observe that A,B,C,D,E have an efficiency of 1 ,i.e, they have attained the maximum attainable efficiency. However, F is inefficient in nature.
+
+- Peers of  F  is hence B. This means that F needs to learn from B.
+
+- Lambda values of F is just F(1). Lambda values show how much a particular facility needs to learn from it's peers. Higher lambda value means that the facility needs to learn more from that peer as compared to peers. In this particular case, F only has one peer B so we can't calculate ratios.
+
+- Inefficiency of F is 1-0.8824 = 0.1176
+
+
+***Free-rescaled Hull (FRH):***
+
+FRH is similar to FDH. However, FDH re-scales values and that makes it a little different. 
+```{r}
+frh
+```
+
+- We can observe that A,B,C,D,E has an efficiency of 1 ,i.e, they have attained the maximum attainable efficiency. However, F is inefficient in nature.
+
+- Peers of  F is just B. This means that F needs to learn from B.
+
+- Lambda values of F is F(1). Lambda values show how much a particular facility needs to learn from it's peers. Higher lambda value means that the facility needs to learn more from that peer as compared to peers. In this particular case, F has only one peer so we can not compare or take ratios.
+
+-Inefficiency of F is 1-0.8824 = 0.1176
+
+***
