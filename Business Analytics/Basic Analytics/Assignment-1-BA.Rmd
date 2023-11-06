@@ -1,0 +1,67 @@
+---
+title: "Assignment-1 (BA)"
+author: "Dev"
+date: "2023-09-19"
+output:
+  pdf_document: default
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,comment=NA)
+```
+**Q1: Install the ISLR library using the install.packages() command. Call the library using the library(ISLR) command to ensure that the library is correctly installed.**
+```{r}
+#Installing ISLR package and using it 
+library(ISLR)
+```
+**Q2: Create a new R-Notebook (.Rmd) file. In the first code chunk, call the ISLR library and then print the summary of the Carseats dataset. How many observations (rows) this dataset contains?**
+```{r}
+#Displaying summary of carseats data:
+library(ISLR)
+summary(Carseats)
+#Counting number of rows: 
+nrow(Carseats)
+```
+**Q3:Using the summary statistics shown above, what is maximum value of the advertising attribute?**
+
+As per summary above, maximum in Advertising attribute is 29.00.
+We can verify this observation from following code: 
+```{r}
+max(Carseats$Advertising)
+```
+Hence, our observation is correct that maximum of Advertising attribute is 29.
+
+**Q4:Calculate the IQR of the Price attribute.**
+
+IQR of Price attribute is : 
+```{R}
+#Using IQR functin to calculate IQR of price attribute
+IQR(Carseats$Price)
+```
+**Q5: Plot the Sales against Price. What do you see in there? Calculate the correlation of the two attributes. What does the sign of the correlation coefficient suggest?**
+```{r}
+#Plotting sales against price
+plot(Carseats$Sales,
+     Carseats$Price,
+     main="Plot of sales against price",
+     xlab="Price",
+     ylab="Sales",
+     pch=16,
+     col="red")
+abline(lm(Carseats$Price~Carseats$Sales,data=Carseats),col="black")
+```
+
+We see that the graph is most crowded in the price range of 5 to 10 and the sales are maximum in this range as well. Also, most of the points are not close to the regression line which shows us that the relation between attributes is not strong. Besides this, we have a declining regression line which means that the attributes have a inverse linear relation, which can be verified by negative value of Pearson's correlation coefficient. 
+
+Calculating co-relation between sales and price: 
+```{r}
+#Calculating relation between sales and price
+print(cor(Carseats$Sales,Carseats$Price))
+```
+The value of correlation coefficient hence turns out to be -0.44. The negative value of coefficient confirms our observation that the relation between attributes is inverse and it's small magnitude confirms that the inverse linear relation between them is not strong. 
+
+
+
+

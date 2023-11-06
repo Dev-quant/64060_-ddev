@@ -1,0 +1,238 @@
+---
+title: "Assignment-2(BA)"
+author: "Dev"
+date: "2023-10-08"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,comment=NA)
+```
+
+Setting directory for using online_retail.csv datset
+```{r}
+setwd("/Users/devmarwah/Downloads")
+#Reading the csv file
+df=read.csv("Online_Retail.csv")
+library(tidyverse)
+```
+****
+**Q-1: Show the breakdown of the number of transactions by countries i.e., how many transactions are in the dataset for each country (consider all records including cancelled transactions). Show this in total number and also in percentage. Show only countries accounting for more than 1% of the total transactions**
+
+```{r}
+#Using table command to get total transactions bycountries
+total.number=(table(df$Country))
+#Using prop.table and then multiplying by 100 to get values in percentages
+df1=prop.table(total.number)
+percentage=round(100*df1,digits = 2)
+answer=cbind(total.number,percentage)
+answer=as.data.frame(answer)
+#Using filter to get only percentage>1
+answer=answer %>% 
+  filter(percentage>1)
+answer
+```
+***
+**Q-2:Create a new variable ‘TransactionValue’ that is the product of the exising ‘Quantity’ and ‘UnitPrice’ variables. Add this variable to the dataframe. **
+
+
+```{r}
+#Using mutate function to create new variable
+df=df %>% 
+  mutate(Transactionvalue=Quantity*UnitPrice) 
+```
+***
+**Q-3:Using the newly created variable, TransactionValue, show the breakdown of transaction values by countries i.e. how much money in total has been spent each country. Show this in total sum of transaction values. Show only countries with total transaction exceeding 130,000 British Pound**
+
+```{r}
+  df %>% 
+  #Grouping by countries and then summarising sum of transaction values
+  group_by(Country) %>% 
+  summarise(Total.spending=sum(Transactionvalue)) %>% 
+  #Using filter command to show countries with total.spending > 130,000 Pounds
+  filter(Total.spending>130000)
+```
+
+***
+**Doing preparations for Q-4**
+
+Checking class of invoice date variable
+```{r}
+class(df$InvoiceDate)
+```
+Converting invoice date's data type from character to POSIXIt-
+```{r}
+#Using strptime command
+Temp=strptime(df$InvoiceDate,format = "%m/%d/%Y %H:%M",tz='GMT' )
+  new.invoice.date = as.Date(Temp,"%d") 
+  invoice.day=weekdays(Temp) 
+  invoice.hours=format(Temp,"%H")
+  invoice.months=format(Temp,"%m")
+```
+***
+
+**Q-4:**
+
+**a) Show the percentage of transactions (by numbers) by days of the week**
+
+```{r}
+weekday.percentage = round(100*prop.table(table(invoice.day)))
+weekday.percentage
+```
+**b)Show the percentage of transactions (by transaction volume) by days of the week **
+
+```{r}
+#Using variable transaction value as transaction volume
+volume=cbind(df,invoice.day)
+volume=volume %>% 
+  group_by(invoice.day) %>% 
+  summarise(weekday.volume.percentage=100*(sum(Transactionvalue)/sum(df$Transactionvalue)))
+volume
+```
+**c)Show the percentage of transactions (by transaction volume) by month of the year**
+```{r}
+months.name=c("January","February","March","April","May","June","July","August","September","October","November","December")
+weekday.percentage.month = round(100*prop.table(table(invoice.months)))
+cbind(months.name,weekday.percentage.month)
+```
+**d)What was the date with the highest number of transactions from Australia?**
+```{r}
+df.A=cbind(df,new.invoice.date)
+df.A=df.A %>% 
+  filter(Country=="Australia")
+df.date.A=table(df.A$new.invoice.date)
+#Using max command to get the date with maximum 
+answer.A=which(df.date.A==max(df.date.A))
+answer.A
+```
+Hence, Australia did maximum transactions on 2011-06-15
+
+**e) The company needs to shut down the website for two consecutive hours for maintenance. What would be the hour of the day to start this so that the distribution is at minimum for the customers?**
+
+```{r}
+df.m=as.data.frame(table(invoice.hours))
+df.m
+```
+We can see that the number of transactions are minimum fo 6th and 7th hour.Hence, the company can close for maintenance in these hours as it will cause least disturbance to customers.
+
+***
+
+**Q-5: Plot the histogram of transaction values from Germany. Use the hist() function to plot.**
+```{r}
+df.5=df %>% 
+  #Chossig germany as country-
+  filter(Country=="Germany") %>% 
+  mutate(Transactionvalue=as.numeric(Transactionvalue)) 
+#Using hist function to plot histogram-
+hist(df.5$Transactionvalue,
+     main = "Plot of transaction values",
+     xlab = "Transaction Value",
+     ylab = "Frequecy",
+     col = "red")
+```
+
+***
+
+**Q-6: Which customer had the highest number of transactions? Which customer is most valuable (i.e. highest total sum of transactions)? **
+```{r}
+#Using table command on customerID
+table.ID=(table(df$CustomerID))
+#Using max command to get maximum value of transactions
+answer.customers=which.max(table.ID)
+answer.customers
+```
+Hence, CustomerID 17841 has the maximum number of transactions (4043)
+```{r}
+#Using transaction value this time to get most valuable customer
+most.valuable=df %>% 
+  filter(!is.na(CustomerID))
+most.valuable=most.valuable %>% 
+  group_by(CustomerID) %>% 
+  summarise(spending=round(sum(Transactionvalue),2)) %>% 
+  filter(spending==max(spending))
+  most.valuable
+```
+Hence,customerID 14646 is most value as it has maximum spending of 279489
+
+***
+
+**Q-7: Calculate the percentage of missing values for each variable in the dataset**
+```{r}
+round(100*colMeans(is.na(df)))
+```
+
+Hence, only customer ID has missing values (25%)
+
+***
+
+**Q-8: What are the number of transactions with missing CustomerID records by countries**
+
+Total number of missing values in CustomerID is : 
+```{r}
+ID.na = df %>% 
+  filter(is.na(CustomerID))
+ID.na=ID.na %>% 
+  group_by(Country) %>% 
+  summarise(Number.of.missing.IDs=length(CustomerID))
+ID.na
+```
+
+***
+
+**Q-9: On average, how often the costumers comeback to the website for their next shopping?**
+```{r}
+#making invoice date numeric and binding with dataset
+df.consecutive=cbind(df,new.invoice.date)
+df.consecutive=df.consecutive%>% 
+  select(CustomerID,new.invoice.date) %>% 
+  group_by(CustomerID) %>% 
+  distinct(new.invoice.date) %>% 
+  arrange(desc(CustomerID)) %>% 
+  #Making formula for difference b/w consecutive shoppings
+  mutate(days.between=abs(new.invoice.date-lag(new.invoice.date))) %>% 
+  #Removing NA values
+  filter(!is.na(days.between))
+#Calculating average of days in between of consecutive shopping
+mean(df.consecutive$days.between)
+```
+
+***
+
+**Q-10:In the retail sector, it is very important to understand the return rate of the goods purchased by customers. In this example, we can define this quantity, simply, as the ratio of the number of transactions cancelled (regardless of the transaction value) over the total number of transactions.With this definition, what is the return rate for the French customers? **
+```{r}
+df.france.cancelled=df %>% 
+  filter(Country=="France", Quantity<0) 
+df.france=df %>% 
+  filter(Country=="France")
+#Dividing lengths of both quantities to get ratio as return rate
+length(df.france.cancelled$Quantity)/length(df.france$Quantity)
+```
+
+***
+
+**Q-11:What is the product that has generated the highest revenue for the retailer?**
+```{r}
+valable.product=df %>% 
+  group_by(Description) %>% 
+  summarise(revenue=round(sum(Transactionvalue),2)) %>% 
+  filter(revenue==max(revenue)) 
+valable.product
+```
+Hence, DOTCOM POSTAGE generated highest revenue. 
+
+***
+
+**Q-12:How many unique customers are represented in the dataset? You can use unique() and length() functions.**
+
+```{r}
+length(unique(df$CustomerID))
+```
+
+Hence, 4373 unique customerIDs are present in out dataset. 
+
+****
+
+
+

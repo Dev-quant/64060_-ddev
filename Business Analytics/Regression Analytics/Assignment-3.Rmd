@@ -1,0 +1,153 @@
+---
+title: "Regression Analytics"
+author: "Dev"
+date: "2023-11-04"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,comment = NA)
+```
+
+## R Markdown
+
+**Q-1:Run the following code in R-studio to create two variables X and Y.**
+**set.seed(2017)**
+**X=runif(100)*10**
+**Y=X*4+3.45**
+**Y=rnorm(100)*0.29*Y+Y**
+
+```{r}
+set.seed(2017)
+X=runif(100)*10
+Y=X*4+3.45
+Y=rnorm(100)*0.29*Y+Y
+```
+
+**a) Plot Y against X. Include a screenshot of the plot in your submission. Using the file menu you can save the graph as a picture on your computer. Based on the plot do you think we can fit a linear model to explain Y based on X? (8% of total points)**
+
+```{r}
+plot(X,Y,xlab="Frequency of X",ylab = "Frequency of Y", main = "Plot of Y against X",col="red",abline(lm(Y~X),col="blue"))
+```
+
+We can clearly see that the above graph shows a positive linear relationship between X and Y.Most of the data points follow the linear model line. However, there are some outliers but majority of the points follow a positive linear regression. Hence, we can conclude that we can in fact use a linear model to explain relationship of X and Y. 
+
+**b) Construct a simple linear model of Y based on X. Write the equation that explains Y based on X. What is the accuracy of this model? (8% of total points)**
+
+```{r}
+model=lm(Y~X)
+```
+We can now get coefficient and intercept of relation between X and Y as:
+```{r}
+round(model$coefficients,2)
+```
+Hence, we can write equation of Y and X as follows:
+$$Y=b_nX+b_o$$
+$$=>Y=3.61X+4.47$$
+
+Accuracy of above model is :
+```{r}
+summary(model)
+```
+The accuracy of model is the value of multiple R-squared. Hence, our model is 65% accurate. A smaller p value here shows us that the relationship is significant between both variables. This is also evident from smaller difference between multiple- squared ad adjusted r-squared.
+
+**c) How the Coefficient of Determination, R 2, of the model above is related to the correlation coefficient of X and Y? (8% of total points)**
+
+In a linear regression model square of correlation coefficient and Multiple R-squared are equal.
+
+Value of Correlation coefficient can be calculated as: 
+```{r}
+cor(X,Y)^2
+```
+
+Hence, value of correlation coefficient and R-square values are same as **0.65**.
+
+***
+
+**Q-2:We will use the ‘mtcars’ dataset for this question. The dataset is already included in your R distribution. The dataset shows some of the characteristics of different cars.**
+```{r}
+#Printing head of dataset to have a glance at it:
+head(mtcars)
+```
+
+**a) James wants to buy a car. He and his friend, Chris, have different opinions about the Horse Power (hp) of cars. James think the weight of a car (wt) can be used to estimate the Horse Power of the car while Chris thinks the fuel consumption expressed in Mile Per Gallon (mpg),is a better estimator of the (hp). Who do you think is right? Construct simple linear models using mtcars data to answer the question. (17% of total points).**
+
+Making James model-
+```{r}
+james=lm(mtcars$hp~mtcars$wt,data = mtcars)
+plot(mtcars$wt,mtcars$hp,col="red",abline(lm(mtcars$hp~mtcars$wt)))
+summary(james)
+```
+
+Making Chris model-
+```{r}
+chris=lm(mtcars$hp~mtcars$mpg,data = mtcars)
+plot(mtcars$mpg,mtcars$hp,col="red",abline(lm(mtcars$hp~mtcars$mpg)))
+summary(chris)
+```
+
+Value of R-squared is larger for Chris's opinion which means he has accuracy,i.e,
+**Chris's model is more accuracte and correct.**
+
+**b) Build a model that uses the number of cylinders (cyl) and the mile per gallon (mpg) values of a car to predict the car Horse Power (hp). Using this model, what is the estimated Horse Power of a car with 4 cylinders and mpg of 22? (17% of total points)**
+
+```{r}
+model.2=lm(hp~cyl+mpg,data=mtcars)
+df=data.frame(cyl=4,mpg=22)
+prediction=predict(model.2,newdata = df)
+prediction
+```
+
+Hence, according to created model value of horse power would be **88.93618**.
+
+**Q-3:The dataset contains information about houses in different parts of Boston. Details of the dataset is explained here. Note the dataset is old, hence low house prices!**
+
+Using required dataset:
+```{r}
+library(mlbench)
+data(BostonHousing)
+```
+
+**a) Build a model to estimate the median value of owner-occupied homes (medv)based on the following variables: crime crate (crim), proportion of residential land zoned for lots over 25,000 sq.ft (zn), the local pupil-teacher ratio (ptratio) and weather the whether the tract bounds Chas River(chas). Is this an accurate model? (Hint check R 2 ) (8% of total points)**
+Making the required linear model:
+```{r}
+model.3=lm(medv~crim+zn+ptratio+chas,BostonHousing)
+summary(model.3)
+```
+
+All variables here are significant but lower value of multiple-R squared tells us that model has a very low accuracy of 35.99%. Hence, it is not an accurate model.
+
+**b) Use the estimated coefficient to answer these questions?**
+
+Displaying coefficients for reference:
+```{r}
+model.3$coefficients
+```
+
+**I. Imagine two houses that are identical in all aspects but one bounds the Chas River and the other does not. Which one is more expensive and by how much? (8% of total points)** 
+
+Value of coefficient for chas1 is positive. This means that the house that bounds the chas river will be more expensive by 4.58392591. 
+
+**II. Imagine two houses that are identical in all aspects but in the neighborhood of one of them the pupil-teacher ratio is 15 and in the other one is 18. Which one is more expensive and by how much? *(Golden Question: 4% extra)**
+
+Value of coefficient for pupil-teacher ratio is negative. This means that the house with a higher pupil-teacher ratio (18) will have a lesser price than the house with a lowere pupil-teacher ratio(15) by : 
+```{r}
+18*1.49367255-15*1.49367255
+```
+
+**c) Which of the variables are statistically important (i.e. related to the house price)? Hint: use the p-values of the coefficients to answer. (8% of total points)**
+
+All of the variables are statistically important since all of them have a low p-value i.e below 0.05
+
+**d) Use the anova analysis and determine the order of importance of these four variables. (18%of total points)**
+```{r}
+anova(model.3)
+```
+Order of importance can be found on the basis of values of Sum sq. Hence, the order of important can be deduced out of anova analysis as: 
+
+**crim**
+**ptratio**
+**zn**
+**chas**
+
+

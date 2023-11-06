@@ -1,0 +1,128 @@
+---
+title: "Assignment-Goal Programming (6)"
+author: "Dev"
+date: "2023-10-31"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(kableExtra)
+library(lpSolveAPI)
+```
+
+# Problem Statement: 
+
+The Research and Development Division of the Emax Corporation has developed three new products. A decision now needs to be made on which mix of these products should be produced.Management wants primary consideration given to three factors: total profit, stability in the workforce, and achieving an increase in the company’s earnings next year from the $60 million achieved this year. In particular, using the units given in the following table, they want to
+Maximize Z = P - 5C - 2D, where
+P = total (discounted) profit over the life of the new products,
+C = change (in either direction) in the current level of employment,
+D = decrease (if any) in next year’s earnings from the current year’s level.
+The amount of any increase in earnings does not enter into Z, because management is concerned primarily with just achieving some increase to keep the stockholders happy. (It has mixed feelings about a large increase that then would be difficult to surpass in subsequent years).The impact of each of the new products (per unit rate of production) on each of these factors is shown in the following table:
+
+Given problem can be stated in table as: 
+```{r}
+df= data.frame(Factor=c("Total Profit","Employement level","Earning next year"),
+               A=c(15,8,6),
+               B=c(12,6,5),
+               C=c(20,5,4),
+               Goal=c("Maximize","=70",">=60"),
+               Units=c("Millions of dollars",'Hundereds of workers','Million of dollars'),
+               Penalties = c("  ",'(+)5,(-)5',-2)
+               )
+df %>% 
+  kable(align = "c") %>% 
+  kable_classic() %>% 
+  add_header_above(header = c("  "=1,"Product"=3,"  "=3)) %>% 
+  add_header_above(header = c(" "=1,"Unit contribution"=3," "=3)) %>% 
+  column_spec(1,border_right = TRUE) %>% 
+  column_spec(4,border_right = TRUE) %>% 
+  column_spec(5,border_right = TRUE) %>% 
+  column_spec(6,border_right = TRUE) 
+```
+**Q-1: Define y1+ and y1-, respectively, as the amount over (if any) and the amount under (if any) the employment level goal. Define y2+ and y2- in the same way for the goal regarding earnings next year. Define x1, x2, and x3 as the production rates of Products 1, 2, and 3, respectively. With these definitions, use the goal programming technique to express y1+, y1- , y2+ and y2- algebraically in terms of x1, x2, and x3. Also, express P in terms of x1, x2, and x3.**
+
+The penalty is bi-directional for factor "Employment level" since direction of constraint is "=" which means the company neither wants to go higher nor lower than 70.However, penalty for earning next year is uni-directional and is negative cause the company doesn't want to go below 60.
+
+Value of P,as per table, can be mathematically represented as: 
+$$P=15x_1+12x_2+20x_3$$
+
+Constraints: 
+
+$$Employement\hspace{0.2cm}Level:8x_1+6x_2+5x_3=70$$
+$$Earning\hspace{0.2cm}next\hspace{0.2cm}year:6x_1+5x_2+4x_3\ge60$$
+
+
+Writing equations in deviation form:$y_i=y_i^{+}+y_i^{-}$
+
+$$Employement\hspace{0.2cm}Level:(y_1^{+}-y_1^{-})=8x_1+6x_2+5x_3=70$$
+
+$$=>8x_1+6x_2+5x_3-(y_1^{+}-y_1^{-})=70$$
+
+$$Earning\hspace{0.2cm}next\hspace{0.2cm}year:(y_2^{+}-y_2^{-})=6x_1+5x_2+4x_3=60$$
+$$=>6x_1+5x_2+4x_3-(y_2^{+}-y_2^{-})=60$$
+where,
+
+$y_1^{+}$ is a positive deviation or over achievement of total profit.
+
+$y_1^{-}$ is a negative deviation or under achievement of total profit.
+
+$y_2^{+}$ is a positive deviation or over achievement of earning next year. 
+
+$y_2^{-}$ is a negative deviation or under achievement of earning next year.
+
+Non-negativity of constraints: 
+$$x_1\ge0,x_2\ge0,x_3\ge0,y_1^{+}\ge0,y_1^{-}\ge0,y_2^{+}\ge0,y_2^{-}\ge0$$
+
+**2. Express management’s objective function in terms of x1, x2, x3, y1+, y1-, y2+ and y2-**
+
+Objective functions is given as : 
+$$Max\hspace{0.2cm}Z=P-5C-2D\hspace{0.6cm}-----(1)$$
+Putting values of P,C and D in in (1) : 
+$$Max\hspace{0.2cm}Z= 15x_1+12x_2+20x_3-5(y_1^{+}+y_1^{-})-2(y_2^{-}) $$
+
+$$=>Max\hspace{0.2cm}Z=15x_1+12x_2+20x_3-5y_1^{+}-5y_1^{-}-0y_2^{+}-2y_2^{-}$$
+
+**3.Formulate and solve the linear programming model. What are your findings?**
+
+Writing code to solve the problem in R : 
+```{r}
+lp=make.lp(2,7)
+set.objfn(lp,c(15,12,20,-5,-5,0,-2))
+lp.control(lp,sense="max")
+set.row(lp,1,c(8,6,5,-1,1,0,0),indices = c(1,2,3,4,5,6,7))
+set.row(lp,2,c(6,5,4,0,0,-1,1),indices = c(1,2,3,4,5,6,7))
+set.rhs(lp,c(70,60))
+set.constr.type(lp,c("=","="))
+set.bounds(lp,lower = rep(0,7))
+lp.rownames=c("Total Profit","Employement Level","Earning next year")
+lp.colnames=c("x1","x2","x3","y1p","y1m","y2p")
+solve(lp)
+```
+
+Hence, optimized objective function value is: 
+```{r}
+get.objective(lp)
+```
+
+Values of decision variables for optimized objective function is: 
+```{r}
+get.variables(lp)
+```
+
+Following are my findings from this problem: 
+-The LP problem was successfully solved using the specified constraints and objective function.
+-The optimal objective value of the LP problem is 275.
+-The values of the decision variables at the optimal solution are as followss:
+$$x_1=0$$
+$$x_2=0$$
+$$x_3=15$$
+$$y_1^{+}=5$$
+$$y_1^{-}=0$$
+$$y_1^{-}=0$$
+$$y_2^{-}=0$$
+
+These findings represent the optimal solution to the goal programming problem. The values of the decision variables provide insights into the recommended values of employment levels, earnings next year and deviations from the goals for each factor, taking into account the defined constraints and penalties. In this solution, the objective was to maximize the deviations from the goals while considering the associated penalties.
+
+It appears that only $y_1^{+}$ has a non-zero value. Which means that only employment level shows a positive deviation from goals. The penalty associated with it can be calculated as $5*5=25$. Penalties associated with other variables is zero since they don't show any deviation.  
+

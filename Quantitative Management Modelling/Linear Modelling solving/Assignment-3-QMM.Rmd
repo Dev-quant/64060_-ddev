@@ -1,0 +1,128 @@
+---
+title: "Assignment-3-QMM"
+author: "Dev"
+date: "2023-09-20"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,comment=NA)
+```
+**QUESTION:**
+
+The Weigelt Corporation has three branch plants with excess production capacity.Fortunately, the corporation has a new product ready to begin production, and all three plants have this capability, so some of the excess capacity can be used in this way. This product can be made in three sizes--large, medium, and small--that yield a net unit profit of $420, $360, and $300, respectively. Plants 1, 2, and 3 have the excess capacity to produce 750, 900, and 450 units per day of this product, respectively, regardless of the size or combination of sizes involved.
+The amount of available in-process storage space also imposes a limitation on the production rates of the new product. Plants 1, 2, and 3 have 13,000, 12,000, and 5,000 square feet, respectively, of in-process storage space available for a day's production of this product. Each unit of the large, medium, and small sizes produced per day requires 20, 15, and 12 square feet, respectively.Sales forecasts indicate that if available, 900, 1,200, and 750 units of the large,medium, and small sizes, respectively, would be sold per day.
+At each plant, some employees will need to be laid off unless most of the plant’s excess production capacity can be used to produce the new product. To avoid layoffs if possible, management has decided that the plants should use the same percentage of their excess capacity to produce the new product. Management wishes to know how much of each of the sizes should be produced
+by each of the plants to maximize profit.
+```{r}
+df1=data.frame(Profits=c("$420","$360","300"),
+               space_required=c(20,15,12),
+               Atmost_sales=c(900,1200,750),
+               row.names=c("Large","Medium","Small"))
+df1
+df2=data.frame(Capacity=c(750,900,450),
+               Space_available=c(13000,12000,5000),
+               row.names=c("Plant-1","Plant-2","Plant-3"))
+df2
+```
+**Defining decision variables**
+
+Let,
+
+$$Number\hspace{0.2cm}of\hspace{0.2cm}different\hspace{0.2cm}sized\hspace{0.2cm}products\hspace{0.2cm}produced \hspace{0.2cm}by\hspace{0.2cm}plant-1:L_1,M_1,S_1 $$
+$$Number\hspace{0.2cm}of\hspace{0.2cm}different\hspace{0.2cm}sized\hspace{0.2cm}products\hspace{0.2cm}produced \hspace{0.2cm}by\hspace{0.2cm}plant-2:L_2,M_2,S_2 $$
+$$Number\hspace{0.2cm}of\hspace{0.2cm}different\hspace{0.2cm}sized\hspace{0.2cm}products\hspace{0.2cm}produced \hspace{0.2cm}by\hspace{0.2cm}plant-3:L_3,M_3,S_3 $$
+$$Hence,\hspace{0.2cm}decision\hspace{0.2cm}variables\hspace{0.2cm}are:L_1,M_1,S_1,L_2,M_2,S_2,L_3,M_3,S_3$$
+
+**Formulating a linear programming model for this problem**
+
+-Weigelt corporation wants to maximize profit.So, the objective function can be mathematically represented as: 
+$$Z=420L_1+360M_1+300S_1+420L_2+360M_2+300S_2+420L_3+360M_3+300S_3$$
+-Following constraints can be deduced out of the given problem:
+
+Sales Constraints: $$L_1+L_2+L_3\le900$$
+$$M_1+M_2+M_3\le1200$$
+$$S_1+S_2+S_3\le750 $$
+Capacity constraint:$$L_1+M_1+S_1\le750$$
+$$L_2+M_2+S_2\le900$$
+$$L_3+M_3+S_3\le450$$
+Storage constraint:$$20L_1+15M_1+12S_1\le13000$$
+$$20L_2+15M_2+12S_2\le12000$$
+$$20L_3+15M_3+12S_3\le5000$$
+To avoid layoffs: $$For\hspace{0.2cm}plant-1\hspace{0.2cm}and\hspace{0.2cm}plant-2:(L_1+M_1+S_1)/750 = (L_2+M_2+S_2)/900$$
+$$i.e.,\hspace{0.2cm}900L_1+900M_1+900S_1-750L_2-750M_2-750S_2=0 $$
+ $$For\hspace{0.2cm}plant-2\hspace{0.2cm}and\hspace{0.2cm}plant-3:(L_2+M_2+S_2)/900 = (L_3+M_3+S_3)/450$$
+ $$i.e,\hspace{0.2cm}450L_2+450M_2+450S_2-900L_3-900M_3-900S_3=0$$
+$$For \hspace{0.2cm}plant-1\hspace{0.2cm} and \hspace{0.2cm}plant-3: (L_1+M_1+S_1)/750=(L_3+M_3+S_3)/450$$
+$$i.e,\hspace{0.2cm} 450L_1+450M_1+450S_1-750L_3-750M_3-750S_3=0$$
+Non-negativity of variables: $$L_1,M_1,S_1,L_2,M_2,S_2,L_3,M_3,S_3\ge0$$
+
+**Solving the problem**
+
+Applying lpsolve library:
+```{r}
+library(lpSolve)
+```
+
+Making objective function: 
+```{r}
+f.obj=c(420,360,300,420,360,300,420,360,300)
+```
+Making constraint matrix:
+```{r}
+f.const=matrix(c(1,0,0,1,0,0,1,0,0,
+                 0,1,0,0,1,0,0,1,0,
+                 0,0,1,0,0,1,0,0,1,
+                 1,1,1,0,0,0,0,0,0,
+                 0,0,0,1,1,1,0,0,0,
+                 0,0,0,0,0,0,1,1,1,
+                 20,15,12,0,0,0,0,0,0,
+                 0,0,0,20,15,12,0,0,0,
+                 0,0,0,0,0,0,20,15,12,
+                 900,900,900,-750,-750,-750,0,0,0,
+                 0,0,0,450,450,450,-900,-900,-900,
+                 450,450,450,0,0,0,-750,-750,-750),
+               nrow=12,
+               byrow=TRUE)
+```
+Specifying direction of constraint equations: 
+```{r}
+f.dir=c("<=","<=","<=","<=","<=","<=","<=","<=","<=","=","=","=")
+
+```
+Specifying rhs values of equations: 
+```{r}
+f.rhs=c(900,1200,750,750,900,450,13000,12000,5000,0,0,0)
+```
+Applying lpsolve to get solutions: 
+```{r}
+optimum=lp(direction="max", f.obj, f.const, f.dir, f.rhs)
+```
+Maximum value of profit is : 
+```{r}
+optimum$objval
+```
+Number of large, medium , small sized products to be produced by plant-1 are:
+```{r}
+optimum$solution[1]
+optimum$solution[2]
+optimum$solution[3]
+```
+
+Number of large, medium , small sized products to be produced by plant-2 are:
+```{r}
+optimum$solution[4]
+optimum$solution[5]
+optimum$solution[6]
+```
+
+Number of large, medium , small sized products to be produced by plant-1 are:
+```{r}
+optimum$solution[7]
+optimum$solution[8]
+optimum$solution[9]
+```
+
+
